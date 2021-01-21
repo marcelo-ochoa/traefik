@@ -193,7 +193,7 @@ func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadB
 		loadBalancer.Servers[0].Port = ""
 	}
 
-	ip, port, err := p.getIPPort(ctx, container, serverPort)
+	server, port, err := p.getServerPort(ctx, container, serverPort)
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (p *Provider) addServerTCP(ctx context.Context, container dockerData, loadB
 		return errors.New("port is missing")
 	}
 
-	loadBalancer.Servers[0].Address = net.JoinHostPort(ip, port)
+	loadBalancer.Servers[0].Address = net.JoinHostPort(server, port)
 	return nil
 }
 
@@ -223,7 +223,7 @@ func (p *Provider) addServerUDP(ctx context.Context, container dockerData, loadB
 		loadBalancer.Servers[0].Port = ""
 	}
 
-	ip, port, err := p.getIPPort(ctx, container, serverPort)
+	server, port, err := p.getServerPort(ctx, container, serverPort)
 	if err != nil {
 		return err
 	}
@@ -238,7 +238,7 @@ func (p *Provider) addServerUDP(ctx context.Context, container dockerData, loadB
 		return errors.New("port is missing")
 	}
 
-	loadBalancer.Servers[0].Address = net.JoinHostPort(ip, port)
+	loadBalancer.Servers[0].Address = net.JoinHostPort(server, port)
 	return nil
 }
 
@@ -253,7 +253,7 @@ func (p *Provider) addServer(ctx context.Context, container dockerData, loadBala
 		loadBalancer.Servers[0].Port = ""
 	}
 
-	ip, port, err := p.getIPPort(ctx, container, serverPort)
+	server, port, err := p.getServerPort(ctx, container, serverPort)
 	if err != nil {
 		return err
 	}
@@ -269,16 +269,16 @@ func (p *Provider) addServer(ctx context.Context, container dockerData, loadBala
 		return errors.New("port is missing")
 	}
 
-	loadBalancer.Servers[0].URL = fmt.Sprintf("%s://%s", loadBalancer.Servers[0].Scheme, net.JoinHostPort(ip, port))
+	loadBalancer.Servers[0].URL = fmt.Sprintf("%s://%s", loadBalancer.Servers[0].Scheme, net.JoinHostPort(server, port))
 	loadBalancer.Servers[0].Scheme = ""
 
 	return nil
 }
 
-func (p *Provider) getIPPort(ctx context.Context, container dockerData, serverPort string) (string, string, error) {
+func (p *Provider) getServerPort(ctx context.Context, container dockerData, serverPort string) (string, string, error) {
 	logger := log.FromContext(ctx)
 
-	var ip, port string
+	var server, port string
 	usedBound := false
 
 	if p.UseBindPortIP {
@@ -289,25 +289,25 @@ func (p *Provider) getIPPort(ctx context.Context, container dockerData, serverPo
 		case portBinding.HostIP == "0.0.0.0" || len(portBinding.HostIP) == 0:
 			logger.Infof("Cannot determine the IP address (got %q) for %q's binding, falling back on its internal IP/Port.", portBinding.HostIP, container.Name)
 		default:
-			ip = portBinding.HostIP
+			server = portBinding.HostIP
 			port = portBinding.HostPort
 			usedBound = true
 		}
 	}
 
 	if !usedBound {
-		ip = p.getIPAddress(ctx, container)
+		server = p.getServerName(ctx, container)
 		port = getPort(container, serverPort)
 	}
 
-	if len(ip) == 0 {
-		return "", "", fmt.Errorf("unable to find the IP address for the container %q: the server is ignored", container.Name)
+	if len(server) == 0 {
+		return "", "", fmt.Errorf("unable to find the Server Name or IP address for the container %q: the server is ignored", container.Name)
 	}
 
-	return ip, port, nil
+	return server, port, nil
 }
 
-func (p Provider) getIPAddress(ctx context.Context, container dockerData) string {
+func (p Provider) getServerName(ctx context.Context, container dockerData) string {
 	logger := log.FromContext(ctx)
 
 	if container.ExtraConf.Docker.Network != "" {
@@ -360,7 +360,7 @@ func (p Provider) getIPAddress(ctx context.Context, container dockerData) string
 		}
 
 		containerParsed.ExtraConf = extraConf
-		return p.getIPAddress(ctx, containerParsed)
+		return p.getServerName(ctx, containerParsed)
 	}
 
 	for _, network := range container.NetworkSettings.Networks {

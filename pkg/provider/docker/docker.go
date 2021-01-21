@@ -551,12 +551,10 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 	return dockerDataList, err
 }
 
-func parseTasks(ctx context.Context, task swarmtypes.Task, serviceDockerData dockerData,
-	networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) dockerData {
-
+func parseTasks(ctx context.Context, task swarmtypes.Task, serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) dockerData {
 	var hostName string
 
-	if task.Spec.ContainerSpec.Hostname != "" {
+	if task.Spec.ContainerSpec != nil && task.Spec.ContainerSpec.Hostname != "" {
 		hostName = strings.ReplaceAll(task.Spec.ContainerSpec.Hostname, "{{.Task.Slot}}", strconv.Itoa(task.Slot))
 		hostName = strings.ReplaceAll(hostName, "{{.Service.Name}}", serviceDockerData.Name)
 		hostName = strings.ReplaceAll(hostName, "{{.Node.ID}}", task.NodeID)

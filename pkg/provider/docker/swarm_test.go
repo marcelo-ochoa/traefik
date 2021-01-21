@@ -40,26 +40,26 @@ func TestListTasks(t *testing.T) {
 		{
 			service: swarmService(serviceName("container")),
 			tasks: []swarm.Task{
-				swarmTask("id1",
+				swarmTask("id1", "node1",
 					taskSlot(1),
 					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.1"}),
 					taskStatus(taskState(swarm.TaskStateRunning)),
 				),
-				swarmTask("id2",
+				swarmTask("id2", "node1",
 					taskSlot(2),
 					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.2"}),
 					taskStatus(taskState(swarm.TaskStatePending)),
 				),
-				swarmTask("id3",
+				swarmTask("id3", "node1",
 					taskSlot(3),
 					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.3"}),
 				),
-				swarmTask("id4",
+				swarmTask("id4", "node1",
 					taskSlot(4),
 					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.4"}),
 					taskStatus(taskState(swarm.TaskStateRunning)),
 				),
-				swarmTask("id5",
+				swarmTask("id5", "node1",
 					taskSlot(5),
 					taskNetworkAttachment("1", "network1", "overlay", []string{"127.0.0.5"}),
 					taskStatus(taskState(swarm.TaskStateFailed)),
@@ -67,8 +67,8 @@ func TestListTasks(t *testing.T) {
 			},
 			isGlobalSVC: false,
 			expectedTasks: []string{
-				"container.1",
-				"container.4",
+				"container.1.id1",
+				"container.4.id4",
 			},
 			networks: map[string]*dockertypes.NetworkResource{
 				"1": {
@@ -231,11 +231,11 @@ func TestListServices(t *testing.T) {
 					withEndpointSpec(modeDNSSR)),
 			},
 			tasks: []swarm.Task{
-				swarmTask("id1",
+				swarmTask("id1", "node1",
 					taskNetworkAttachment("yk6l57rfwizjzxxzftn4amaot", "network_name", "overlay", []string{"127.0.0.1"}),
 					taskStatus(taskState(swarm.TaskStateRunning)),
 				),
-				swarmTask("id2",
+				swarmTask("id2", "node1",
 					taskNetworkAttachment("yk6l57rfwizjzxxzftn4amaot", "network_name", "overlay", []string{"127.0.0.1"}),
 					taskStatus(taskState(swarm.TaskStateRunning)),
 				),
@@ -262,10 +262,10 @@ func TestListServices(t *testing.T) {
 				},
 			},
 			expectedServices: []string{
-				"service1.0",
-				"service1.0",
-				"service2.0",
-				"service2.0",
+				"service1.0.id1",
+				"service1.0.id2",
+				"service2.0.id1",
+				"service2.0.id2",
 			},
 		},
 	}
@@ -304,20 +304,20 @@ func TestSwarmTaskParsing(t *testing.T) {
 		{
 			service: swarmService(serviceName("container")),
 			tasks: []swarm.Task{
-				swarmTask("id1", taskSlot(1)),
-				swarmTask("id2", taskSlot(2)),
-				swarmTask("id3", taskSlot(3)),
+				swarmTask("id1", "node1", taskSlot(1)),
+				swarmTask("id2", "node1", taskSlot(2)),
+				swarmTask("id3", "node1", taskSlot(3)),
 			},
 			isGlobalSVC: false,
 			expected: map[string]dockerData{
 				"id1": {
-					Name: "container.1",
+					Name: "container.1.id1",
 				},
 				"id2": {
-					Name: "container.2",
+					Name: "container.2.id2",
 				},
 				"id3": {
-					Name: "container.3",
+					Name: "container.3.id3",
 				},
 			},
 			networks: map[string]*dockertypes.NetworkResource{
@@ -329,20 +329,20 @@ func TestSwarmTaskParsing(t *testing.T) {
 		{
 			service: swarmService(serviceName("container")),
 			tasks: []swarm.Task{
-				swarmTask("id1"),
-				swarmTask("id2"),
-				swarmTask("id3"),
+				swarmTask("id1", "node1"),
+				swarmTask("id2", "node1"),
+				swarmTask("id3", "node1"),
 			},
 			isGlobalSVC: true,
 			expected: map[string]dockerData{
 				"id1": {
-					Name: "container.id1",
+					Name: "container.node1.id1",
 				},
 				"id2": {
-					Name: "container.id2",
+					Name: "container.node1.id2",
 				},
 				"id3": {
-					Name: "container.id3",
+					Name: "container.node1.id3",
 				},
 			},
 			networks: map[string]*dockertypes.NetworkResource{
@@ -361,7 +361,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 			),
 			tasks: []swarm.Task{
 				swarmTask(
-					"id1",
+					"id1", "node1",
 					taskNetworkAttachment("1", "vlan", "macvlan", []string{"127.0.0.1"}),
 					taskStatus(
 						taskState(swarm.TaskStateRunning),
@@ -372,7 +372,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 			isGlobalSVC: true,
 			expected: map[string]dockerData{
 				"id1": {
-					Name: "container.id1",
+					Name: "container.node1.id1",
 					NetworkSettings: networkSettings{
 						Networks: map[string]*networkData{
 							"vlan": {

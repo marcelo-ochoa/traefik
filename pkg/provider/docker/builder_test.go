@@ -11,7 +11,7 @@ import (
 func containerJSON(ops ...func(*docker.ContainerJSON)) docker.ContainerJSON {
 	c := &docker.ContainerJSON{
 		ContainerJSONBase: &docker.ContainerJSONBase{
-			Name:       "fake",
+			Name:       "hostName",
 			HostConfig: &container.HostConfig{},
 		},
 		Config: &container.Config{},
@@ -77,9 +77,10 @@ func ipv4(ip string) func(*network.EndpointSettings) {
 	}
 }
 
-func swarmTask(id string, ops ...func(*swarm.Task)) swarm.Task {
+func swarmTask(id string, nodeID string, ops ...func(*swarm.Task)) swarm.Task {
 	task := &swarm.Task{
-		ID: id,
+		ID:     id,
+		NodeID: nodeID,
 	}
 
 	for _, op := range ops {

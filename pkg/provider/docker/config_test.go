@@ -3085,7 +3085,7 @@ func TestDockerGetIPPort(t *testing.T) {
 				UseBindPortIP: true,
 			}
 
-			actualIP, actualPort, actualError := provider.getIPPort(context.Background(), dData, test.serverPort)
+			actualIP, actualPort, actualError := provider.getServerPort(context.Background(), dData, test.serverPort)
 			if test.expected.error {
 				require.Error(t, actualError)
 			} else {
@@ -3181,7 +3181,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 				withNetwork("testnet", ipv4("10.11.12.13")),
 			),
 			network:  "testnet",
-			expected: "10.11.12.13",
+			expected: "hostName",
 		},
 		{
 			desc: "two networks, network label",
@@ -3190,7 +3190,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 				withNetwork("testnet2", ipv4("10.11.12.14")),
 			),
 			network:  "testnet2",
-			expected: "10.11.12.14",
+			expected: "hostName",
 		},
 		{
 			desc: "two networks, no network label, mode host",
@@ -3208,7 +3208,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 				withNetwork("testnet", ipv4("10.11.12.13")),
 				withNetwork("webnet", ipv4("10.11.12.14")),
 			),
-			expected: "10.11.12.14",
+			expected: "hostName",
 		},
 		{
 			desc: "two networks, network label",
@@ -3217,7 +3217,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 				withNetwork("webnet", ipv4("10.11.12.14")),
 			),
 			network:  "testnet",
-			expected: "10.11.12.13",
+			expected: "hostName",
 		},
 		{
 			desc: "no network, no network label, mode host",
@@ -3252,7 +3252,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 				dData.ExtraConf.Docker.Network = test.network
 			}
 
-			actual := provider.getIPAddress(context.Background(), dData)
+			actual := provider.getServerName(context.Background(), dData)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -3292,7 +3292,7 @@ func TestSwarmGetIPAddress(t *testing.T) {
 					virtualIP("2", "10.11.12.99/24"),
 				),
 			),
-			expected: "10.11.12.99",
+			expected: "defaultServiceName",
 			networks: map[string]*docker.NetworkResource{
 				"1": {
 					Name: "foonet",
@@ -3316,7 +3316,7 @@ func TestSwarmGetIPAddress(t *testing.T) {
 			dData, err := provider.parseService(context.Background(), test.service, test.networks)
 			require.NoError(t, err)
 
-			actual := provider.getIPAddress(context.Background(), dData)
+			actual := provider.getServerName(context.Background(), dData)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
